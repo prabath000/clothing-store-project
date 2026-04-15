@@ -9,10 +9,15 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  SafeAreaView,
+  StatusBar,
+  Image,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { authAPI } from '../api/api';
 import { COLORS, SPACING, TYPOGRAPHY } from '../theme/theme';
+import Icon from 'react-native-vector-icons/Feather';
+import CustomButton from '../components/CustomButton';
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -31,130 +36,194 @@ const LoginScreen = ({ navigation }) => {
       const response = await authAPI.login({ email, password });
       await login(response.data.token, response.data);
     } catch (error) {
-      Alert.alert('Login Failed', error.response?.data?.message || 'Something went wrong');
+      console.log('Login Error Detail:', error);
+      let errorMsg = 'Something went wrong. Please check your credentials.';
+      
+      if (!error.response) {
+        errorMsg = 'Server unreachable. Please check your internet connection or try again later.';
+      } else if (error.response.data?.message) {
+        errorMsg = error.response.data.message;
+      }
+      
+      Alert.alert('Login Failed', errorMsg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
-      <View style={styles.header}>
-        <Text style={styles.title}>AMH</Text>
-        <Text style={styles.subtitle}>Premium Clothing Store</Text>
-      </View>
-
-      <View style={styles.form}>
-        <Text style={styles.label}>Email Address</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter your email"
-          placeholderTextColor="#999"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-
-        <Text style={styles.label}>Password</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter your password"
-          placeholderTextColor="#999"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
-
-        <TouchableOpacity 
-          style={styles.button} 
-          onPress={handleLogin}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color={COLORS.primary} />
-          ) : (
-            <Text style={styles.buttonText}>Sign In</Text>
-          )}
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.inner}
+      >
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <Icon name="arrow-left" size={24} color={COLORS.text} />
         </TouchableOpacity>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Don't have an account? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-            <Text style={styles.link}>Sign Up</Text>
-          </TouchableOpacity>
+        <View style={styles.header}>
+          <Image 
+            source={require('../assets/images/logo.png')} 
+            style={styles.logoImage} 
+            resizeMode="contain" 
+          />
+          <Text style={styles.title}>Welcome Back!</Text>
+          <Text style={styles.subtitle}>Sign in to continue your fashion journey</Text>
         </View>
-      </View>
-    </KeyboardAvoidingView>
+
+        <View style={styles.form}>
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Email Address</Text>
+            <View style={styles.inputWrapper}>
+              <Icon name="mail" size={18} color={COLORS.textSecondary} style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your email"
+                placeholderTextColor={COLORS.textSecondary}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Password</Text>
+            <View style={styles.inputWrapper}>
+              <Icon name="lock" size={18} color={COLORS.textSecondary} style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your password"
+                placeholderTextColor={COLORS.textSecondary}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
+            </View>
+          </View>
+
+          <TouchableOpacity style={styles.forgotBtn}>
+            <Text style={styles.forgotText}>Forgot Password?</Text>
+          </TouchableOpacity>
+
+          <CustomButton 
+            title="Sign In" 
+            onPress={handleLogin} 
+            loading={loading}
+            style={styles.loginBtn}
+          />
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Don't have an account? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+              <Text style={styles.link}>Sign Up</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.primary,
-    justifyContent: 'center',
+    backgroundColor: COLORS.white,
+  },
+  inner: {
+    flex: 1,
     padding: SPACING.l,
   },
-  header: {
+  backBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: COLORS.secondary,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: SPACING.xl * 2,
+    marginBottom: SPACING.xl,
+  },
+  header: {
+    marginBottom: 48,
+    alignItems: 'center',
+  },
+  logoImage: {
+    width: 80,
+    height: 80,
+    marginBottom: SPACING.m,
   },
   title: {
     ...TYPOGRAPHY.h1,
-    color: COLORS.secondary,
-    fontSize: 48,
-    letterSpacing: 5,
+    fontSize: 28,
+    marginBottom: 8,
   },
   subtitle: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.accent,
-    marginTop: SPACING.xs,
+    ...TYPOGRAPHY.body,
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
   },
   form: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    padding: SPACING.l,
-    borderRadius: 20,
+    flex: 1,
+  },
+  inputContainer: {
+    marginBottom: 20,
   },
   label: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.white,
-    marginBottom: SPACING.s,
-    marginTop: SPACING.m,
+    ...TYPOGRAPHY.bodyMedium,
+    marginBottom: 8,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.secondary,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    height: 56,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  inputIcon: {
+    marginRight: 12,
   },
   input: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    color: COLORS.white,
-    padding: SPACING.m,
-    borderRadius: 10,
-    fontSize: 16,
+    flex: 1,
+    ...TYPOGRAPHY.body,
+    fontSize: 14,
+    color: COLORS.text,
   },
-  button: {
-    backgroundColor: COLORS.secondary,
-    padding: SPACING.m,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: SPACING.xl,
+  forgotBtn: {
+    alignSelf: 'flex-end',
+    marginBottom: 32,
   },
-  buttonText: {
-    color: COLORS.primary,
-    fontWeight: 'bold',
-    fontSize: 18,
+  forgotText: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.accent,
+    fontWeight: '700',
+  },
+  loginBtn: {
+    marginVertical: 12,
+    height: 56,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: SPACING.xl,
+    marginTop: 24,
   },
   footerText: {
-    color: COLORS.accent,
+    ...TYPOGRAPHY.body,
+    fontSize: 14,
+    color: COLORS.textSecondary,
   },
   link: {
-    color: COLORS.secondary,
-    fontWeight: 'bold',
+    ...TYPOGRAPHY.bodyMedium,
+    fontSize: 14,
+    color: COLORS.primary,
+    fontWeight: '700',
   },
 });
 

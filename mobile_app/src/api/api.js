@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Base URL configuration
-const PRODUCTION_URL = 'https://clothing-store-api-xxxx.onrender.com/api'; // Replace with your actual Render URL
+const PRODUCTION_URL = 'https://clothing-store-three.vercel.app/api'; // Live Vercel URL
 const DEVELOPMENT_URL = Platform.OS === 'android' 
   ? 'http://10.0.2.2:5000/api' 
   : 'http://localhost:5000/api';
@@ -12,9 +12,6 @@ const BASE_URL = __DEV__ ? DEVELOPMENT_URL : PRODUCTION_URL;
 
 const api = axios.create({
   baseURL: BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 // Request Interceptor to add JWT Token
@@ -24,10 +21,27 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    console.log(`📡 [${config.method.toUpperCase()}] ${config.url}`);
     return config;
   },
   (error) => Promise.reject(error)
 );
+
+// Response Interceptor for better error logging
+api.interceptors.response.use(
+  (response) => {
+    console.log(`✅ [${response.config.method.toUpperCase()}] ${response.config.url} - ${response.status}`);
+    return response;
+  },
+  (error) => {
+    console.log(`❌ [${error.config?.method.toUpperCase()}] ${error.config?.url} - ${error.response?.status || 'Network Error'}`);
+    if (error.response?.data) {
+      console.log('Error Data:', JSON.stringify(error.response.data));
+    }
+    return Promise.reject(error);
+  }
+);
+
 
 // Auth Endpoints
 export const authAPI = {
@@ -40,10 +54,8 @@ export const authAPI = {
 export const productAPI = {
   getAll: () => api.get('/products'),
   getById: (id) => api.get(`/products/${id}`),
-  create: (data) => api.post('/products', data, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }),
-  update: (id, data) => api.put(`/products/${id}`, data),
+  create: (data, config = {}) => api.post('/products', data, config),
+  update: (id, data, config = {}) => api.put(`/products/${id}`, data, config),
   remove: (id) => api.delete(`/products/${id}`),
 };
 
@@ -82,8 +94,10 @@ export const reviewAPI = {
 export const adminAPI = {
   getStats: () => api.get('/admin/stats'),
   getUsers: () => api.get('/admin/users'),
+  removeUser: (id) => api.delete(`/admin/users/${id}`),
   getOrders: () => api.get('/admin/orders'),
   getReviews: () => api.get('/admin/reviews'),
+  removeReview: (id) => api.delete(`/admin/reviews/${id}`),
 };
 
 // Payment Endpoints

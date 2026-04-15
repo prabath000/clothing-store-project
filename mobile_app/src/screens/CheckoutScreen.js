@@ -30,15 +30,32 @@ const CheckoutScreen = ({ route, navigation }) => {
 
     setLoading(true);
     try {
-      // 1. Create Order
-      const orderData = {
-        orderItems: cart.cartItems.map(item => ({
+      // 1. Create Order: Filter out any items where the product was deleted
+      const validCartItems = cart.cartItems.filter(item => item.product != null);
+      
+      if (validCartItems.length === 0) {
+        Alert.alert('Error', 'Your cart is empty or contains unavailable items.');
+        setLoading(false);
+        return;
+      }
+
+      const orderItems = validCartItems.map(item => {
+        // Ensure image exists to prevent 500 validation error
+        const imageUrl = (item.product.images && item.product.images.length > 0) 
+          ? item.product.images[0] 
+          : 'https://via.placeholder.com/150';
+          
+        return {
           name: item.product.name,
           qty: item.quantity,
-          image: item.product.images[0],
+          image: imageUrl,
           price: item.product.price,
           product: item.product._id,
-        })),
+        };
+      });
+
+      const orderData = {
+        orderItems,
         shippingAddress: { address, city, postalCode, country },
         paymentMethod: 'Credit Card',
         itemsPrice: total,
@@ -106,15 +123,15 @@ const CheckoutScreen = ({ route, navigation }) => {
         <View style={styles.summaryCard}>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Subtotal</Text>
-            <Text style={styles.summaryValue}>${total.toFixed(2)}</Text>
+            <Text style={styles.summaryValue}>Rs.{total.toFixed(2)}</Text>
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Shipping</Text>
-            <Text style={styles.summaryValue}>${total > 500 ? '0.00' : '50.00'}</Text>
+            <Text style={styles.summaryValue}>Rs.{total > 500 ? '0.00' : '50.00'}</Text>
           </View>
           <View style={[styles.summaryRow, styles.totalRow]}>
             <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValue}>${(total + (total > 500 ? 0 : 50)).toFixed(2)}</Text>
+            <Text style={styles.totalValue}>Rs.{(total + (total > 500 ? 0 : 50)).toFixed(2)}</Text>
           </View>
         </View>
 

@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  Alert,
 } from 'react-native';
 import { adminAPI } from '../api/api';
 import { useAuth } from '../context/AuthContext';
@@ -24,7 +25,11 @@ const AdminDashboard = ({ navigation }) => {
       const response = await adminAPI.getStats();
       setStats(response.data);
     } catch (error) {
-      console.error(error);
+      console.error('Admin stats error:', error);
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        Alert.alert('Session Expired', 'Please login again as an administrator.');
+        logout();
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -73,7 +78,7 @@ const AdminDashboard = ({ navigation }) => {
       </View>
 
       <View style={styles.statsGrid}>
-        <StatCard title="Revenue" value={`$${stats?.totalRevenue || 0}`} icon="cash-outline" color="#4CAF50" />
+        <StatCard title="Revenue" value={`Rs.${stats?.totalRevenue || 0}`} icon="cash-outline" color="#4CAF50" />
         <StatCard title="Orders" value={stats?.ordersCount || 0} icon="cart-outline" color="#2196F3" />
         <StatCard title="Products" value={stats?.productsCount || 0} icon="shirt-outline" color="#FF9800" />
         <StatCard title="Users" value={stats?.usersCount || 0} icon="people-outline" color="#9C27B0" />
@@ -93,13 +98,13 @@ const AdminDashboard = ({ navigation }) => {
           <Icon name="chevron-forward" size={20} color={COLORS.darkGrey} />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('ManageUsers')}>
           <Icon name="people" size={24} color={COLORS.primary} style={styles.menuIcon} />
           <Text style={styles.menuText}>Manage Users</Text>
           <Icon name="chevron-forward" size={20} color={COLORS.darkGrey} />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('ManageReviews')}>
           <Icon name="star" size={24} color={COLORS.primary} style={styles.menuIcon} />
           <Text style={styles.menuText}>Manage Reviews</Text>
           <Icon name="chevron-forward" size={20} color={COLORS.darkGrey} />

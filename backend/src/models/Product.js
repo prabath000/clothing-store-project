@@ -20,6 +20,11 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Please add a category'],
     },
+    sizes: [
+      {
+        type: String, // e.g., 'S', 'M', 'L', 'XL'
+      },
+    ],
     stock: {
       type: Number,
       required: [true, 'Please add stock quantity'],

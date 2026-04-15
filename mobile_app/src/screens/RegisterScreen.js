@@ -10,9 +10,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  SafeAreaView,
+  StatusBar,
+  Image,
 } from 'react-native';
 import { authAPI } from '../api/api';
 import { COLORS, SPACING, TYPOGRAPHY } from '../theme/theme';
+import Icon from 'react-native-vector-icons/Feather';
+import CustomButton from '../components/CustomButton';
 
 const RegisterScreen = ({ navigation }) => {
   const [name, setName] = useState('');
@@ -39,155 +44,217 @@ const RegisterScreen = ({ navigation }) => {
         { text: 'OK', onPress: () => navigation.navigate('Login') }
       ]);
     } catch (error) {
-      Alert.alert('Registration Failed', error.response?.data?.message || 'Something went wrong');
+      console.log('Registration Error Detail:', error);
+      let errorMsg = 'Something went wrong. Please try again.';
+      
+      if (!error.response) {
+        errorMsg = 'Server unreachable. Please check your internet connection or try again later.';
+      } else if (error.response.data?.message) {
+        errorMsg = error.response.data.message;
+      }
+      
+      Alert.alert('Registration Failed', errorMsg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Register</Text>
-          <Text style={styles.subtitle}>Create your AMH Account</Text>
-        </View>
-
-        <View style={styles.form}>
-          <Text style={styles.label}>Full Name</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your full name"
-            placeholderTextColor="#999"
-            value={name}
-            onChangeText={setName}
-          />
-
-          <Text style={styles.label}>Email Address</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your email"
-            placeholderTextColor="#999"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-
-          <Text style={styles.label}>Password</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Create a password"
-            placeholderTextColor="#999"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
-
-          <Text style={styles.label}>Confirm Password</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Confirm your password"
-            placeholderTextColor="#999"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            secureTextEntry
-          />
-
-          <TouchableOpacity 
-            style={styles.button} 
-            onPress={handleRegister}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color={COLORS.primary} />
-            ) : (
-              <Text style={styles.buttonText}>Sign Up</Text>
-            )}
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.inner}
+      >
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+            <Icon name="arrow-left" size={24} color={COLORS.text} />
           </TouchableOpacity>
 
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>Already have an account? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-              <Text style={styles.link}>Sign In</Text>
-            </TouchableOpacity>
+          <View style={styles.header}>
+            <Image 
+              source={require('../assets/images/logo.png')} 
+              style={styles.logoImage} 
+              resizeMode="contain" 
+            />
+            <Text style={styles.title}>Create Account</Text>
+            <Text style={styles.subtitle}>Fill in your details to start shopping</Text>
           </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+
+          <View style={styles.form}>
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Full Name</Text>
+              <View style={styles.inputWrapper}>
+                <Icon name="user" size={18} color={COLORS.textSecondary} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter your full name"
+                  placeholderTextColor={COLORS.textSecondary}
+                  value={name}
+                  onChangeText={setName}
+                />
+              </View>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Email Address</Text>
+              <View style={styles.inputWrapper}>
+                <Icon name="mail" size={18} color={COLORS.textSecondary} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter your email"
+                  placeholderTextColor={COLORS.textSecondary}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Password</Text>
+              <View style={styles.inputWrapper}>
+                <Icon name="lock" size={18} color={COLORS.textSecondary} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Create a password"
+                  placeholderTextColor={COLORS.textSecondary}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                />
+              </View>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Confirm Password</Text>
+              <View style={styles.inputWrapper}>
+                <Icon name="lock" size={18} color={COLORS.textSecondary} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Confirm your password"
+                  placeholderTextColor={COLORS.textSecondary}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry
+                />
+              </View>
+            </View>
+
+            <CustomButton 
+              title="Sign Up" 
+              onPress={handleRegister} 
+              loading={loading}
+              style={styles.registerBtn}
+            />
+
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>Already have an account? </Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                <Text style={styles.link}>Sign In</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.white,
   },
-  scrollContent: {
-    flexGrow: 1,
+  inner: {
+    flex: 1,
+  },
+  scroll: {
     padding: SPACING.l,
-    justifyContent: 'center',
+    flexGrow: 1,
   },
-  header: {
+  backBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: COLORS.secondary,
+    justifyContent: 'center',
     alignItems: 'center',
     marginBottom: SPACING.xl,
-    marginTop: SPACING.xl,
+  },
+  header: {
+    marginBottom: 32,
+    alignItems: 'center',
+  },
+  logoImage: {
+    width: 64,
+    height: 64,
+    marginBottom: SPACING.s,
   },
   title: {
     ...TYPOGRAPHY.h1,
-    color: COLORS.secondary,
-    fontSize: 32,
+    fontSize: 28,
+    marginBottom: 8,
   },
   subtitle: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.accent,
-    marginTop: SPACING.xs,
+    ...TYPOGRAPHY.body,
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
   },
   form: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    padding: SPACING.l,
-    borderRadius: 20,
-    marginBottom: SPACING.xl,
+    flex: 1,
+  },
+  inputContainer: {
+    marginBottom: 16,
   },
   label: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.white,
-    marginBottom: SPACING.s,
-    marginTop: SPACING.m,
+    ...TYPOGRAPHY.bodyMedium,
+    marginBottom: 8,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.secondary,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    height: 56,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  inputIcon: {
+    marginRight: 12,
   },
   input: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    color: COLORS.white,
-    padding: SPACING.m,
-    borderRadius: 10,
-    fontSize: 16,
+    flex: 1,
+    ...TYPOGRAPHY.body,
+    fontSize: 14,
+    color: COLORS.text,
   },
-  button: {
-    backgroundColor: COLORS.secondary,
-    padding: SPACING.m,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: SPACING.xl,
-  },
-  buttonText: {
-    color: COLORS.primary,
-    fontWeight: 'bold',
-    fontSize: 18,
+  registerBtn: {
+    marginTop: 24,
+    marginBottom: 12,
+    height: 56,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: SPACING.xl,
+    marginTop: 20,
+    marginBottom: 40,
   },
   footerText: {
-    color: COLORS.accent,
+    ...TYPOGRAPHY.body,
+    fontSize: 14,
+    color: COLORS.textSecondary,
   },
   link: {
-    color: COLORS.secondary,
-    fontWeight: 'bold',
+    ...TYPOGRAPHY.bodyMedium,
+    fontSize: 14,
+    color: COLORS.primary,
+    fontWeight: '700',
   },
 });
 

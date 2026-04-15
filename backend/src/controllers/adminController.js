@@ -50,9 +50,43 @@ const getAllReviews = asyncHandler(async (req, res) => {
   res.json(reviews);
 });
 
+// @desc    Delete user
+// @route   DELETE /api/admin/users/:id
+// @access  Private/Admin
+const deleteUser = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id);
+  if (user) {
+    if (user.role === 'admin') {
+      res.status(400);
+      throw new Error('Cannot delete admin user');
+    }
+    await user.deleteOne();
+    res.json({ message: 'User deleted' });
+  } else {
+    res.status(404);
+    throw new Error('User not found');
+  }
+});
+
+// @desc    Delete review
+// @route   DELETE /api/admin/reviews/:id
+// @access  Private/Admin
+const deleteReview = asyncHandler(async (req, res) => {
+  const review = await Review.findById(req.params.id);
+  if (review) {
+    await review.deleteOne();
+    res.json({ message: 'Review deleted' });
+  } else {
+    res.status(404);
+    throw new Error('Review not found');
+  }
+});
+
 module.exports = {
   getStats,
   getAllUsers,
   getAllOrders,
   getAllReviews,
+  deleteUser,
+  deleteReview,
 };

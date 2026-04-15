@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const connectDB = require('./src/config/db');
@@ -35,21 +36,22 @@ app.get('/api/health', (req, res) => {
 // Heartbeat for keeping Vercel warm
 app.get('/', (req, res) => res.send('Clothing Store API is Live'));
 
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
 // Body parser
 app.use(express.json());
 
 // Enable CORS
 app.use(cors());
 
+
 // Make uploads folder static
 const path = require('path');
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// Request logging middleware
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-  next();
-});
 
 // Mount routers
 app.use('/api/auth', authRoutes);

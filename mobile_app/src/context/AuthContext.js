@@ -11,12 +11,17 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   const login = async (token, user) => {
-    setIsLoading(true);
-    setUserToken(token);
-    setUserInfo(user);
-    await AsyncStorage.setItem('userToken', token);
-    await AsyncStorage.setItem('userInfo', JSON.stringify(user));
-    setIsLoading(false);
+    try {
+      setIsLoading(true);
+      setUserToken(token);
+      setUserInfo(user);
+      await AsyncStorage.setItem('userToken', token);
+      await AsyncStorage.setItem('userInfo', JSON.stringify(user));
+    } catch (error) {
+      console.log('Login context error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const logout = async () => {

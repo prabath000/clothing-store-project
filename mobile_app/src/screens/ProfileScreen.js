@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { COLORS, SPACING, TYPOGRAPHY } from '../theme/theme';
-import Icon from 'react-native-vector-icons/Ionicons';
+import Icon from 'react-native-vector-icons/Feather';
 
 const ProfileScreen = ({ navigation }) => {
   const { userInfo, logout } = useAuth();
@@ -29,13 +29,17 @@ const ProfileScreen = ({ navigation }) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.avatarContainer}>
-          <Icon name="person-circle" size={100} color={COLORS.secondary} />
+          <View style={styles.avatarPlaceholder}>
+            <Text style={styles.avatarInitial}>
+              {userInfo?.name ? userInfo.name.charAt(0).toUpperCase() : 'U'}
+            </Text>
+          </View>
+          <TouchableOpacity style={styles.editBtn}>
+            <Icon name="edit-2" size={14} color={COLORS.white} />
+          </TouchableOpacity>
         </View>
         <Text style={styles.name}>{userInfo?.name || 'User'}</Text>
         <Text style={styles.email}>{userInfo?.email || ''}</Text>
-        <View style={styles.roleBadge}>
-          <Text style={styles.roleText}>{userInfo?.role?.toUpperCase()}</Text>
-        </View>
       </View>
 
       <View style={styles.menu}>
@@ -44,10 +48,10 @@ const ProfileScreen = ({ navigation }) => {
           onPress={() => navigation.navigate('OrderHistory', { userId: userInfo?._id })}
         >
           <View style={styles.menuIcon}>
-            <Icon name="receipt-outline" size={24} color={COLORS.primary} />
+            <Icon name="package" size={20} color={COLORS.text} />
           </View>
           <Text style={styles.menuText}>My Orders</Text>
-          <Icon name="chevron-forward" size={20} color={COLORS.darkGrey} />
+          <Icon name="chevron-right" size={18} color={COLORS.textSecondary} />
         </TouchableOpacity>
 
         <TouchableOpacity 
@@ -55,26 +59,26 @@ const ProfileScreen = ({ navigation }) => {
           onPress={() => navigation.navigate('Wishlist')}
         >
           <View style={styles.menuIcon}>
-            <Icon name="heart-outline" size={24} color={COLORS.primary} />
+            <Icon name="heart" size={20} color={COLORS.text} />
           </View>
           <Text style={styles.menuText}>Wishlist</Text>
-          <Icon name="chevron-forward" size={20} color={COLORS.darkGrey} />
+          <Icon name="chevron-right" size={18} color={COLORS.textSecondary} />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.menuItem}>
           <View style={styles.menuIcon}>
-            <Icon name="settings-outline" size={24} color={COLORS.primary} />
+            <Icon name="settings" size={20} color={COLORS.text} />
           </View>
           <Text style={styles.menuText}>Account Settings</Text>
-          <Icon name="chevron-forward" size={20} color={COLORS.darkGrey} />
+          <Icon name="chevron-right" size={18} color={COLORS.textSecondary} />
         </TouchableOpacity>
 
         <TouchableOpacity 
           style={[styles.menuItem, styles.logoutBtn]} 
           onPress={handleLogout}
         >
-          <View style={[styles.menuIcon, { backgroundColor: '#FFEBEE' }]}>
-            <Icon name="log-out-outline" size={24} color={COLORS.error} />
+          <View style={[styles.menuIcon, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
+            <Icon name="log-out" size={20} color={COLORS.error} />
           </View>
           <Text style={[styles.menuText, { color: COLORS.error }]}>Log Out</Text>
         </TouchableOpacity>
@@ -90,63 +94,87 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    padding: SPACING.xl,
-    backgroundColor: COLORS.primary,
-    borderBottomLeftRadius: 40,
-    borderBottomRightRadius: 40,
+    paddingTop: 60,
+    paddingBottom: 40,
+    backgroundColor: COLORS.white,
   },
   avatarContainer: {
-    marginBottom: SPACING.s,
+    marginBottom: 20,
+    position: 'relative',
+  },
+  avatarPlaceholder: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: COLORS.secondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 4,
+    borderColor: COLORS.white,
+    // Add subtle shadow for avatar
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  avatarInitial: {
+    ...TYPOGRAPHY.h1,
+    fontSize: 40,
+    color: COLORS.primary,
+  },
+  editBtn: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: COLORS.primary,
+    borderWidth: 3,
+    borderColor: COLORS.white,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   name: {
     ...TYPOGRAPHY.h2,
-    color: COLORS.white,
+    color: COLORS.text,
+    fontSize: 24,
   },
   email: {
     ...TYPOGRAPHY.body,
-    color: COLORS.accent,
-    marginTop: 5,
-  },
-  roleBadge: {
-    backgroundColor: COLORS.secondary,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 20,
-    marginTop: 10,
-  },
-  roleText: {
-    color: COLORS.primary,
-    fontSize: 12,
-    fontWeight: 'bold',
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    marginTop: 4,
   },
   menu: {
-    padding: SPACING.l,
-    marginTop: SPACING.l,
+    paddingHorizontal: SPACING.l,
+    marginTop: 10,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 15,
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.grey,
+    borderBottomColor: COLORS.border,
   },
   menuIcon: {
-    width: 45,
-    height: 45,
-    backgroundColor: COLORS.grey,
-    borderRadius: 10,
+    width: 44,
+    height: 44,
+    backgroundColor: COLORS.secondary,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 15,
+    marginRight: 16,
   },
   menuText: {
     flex: 1,
     fontSize: 16,
-    fontWeight: '500',
-    color: COLORS.primary,
+    fontWeight: '600',
+    color: COLORS.text,
   },
   logoutBtn: {
-    marginTop: SPACING.xl,
+    marginTop: 20,
     borderBottomWidth: 0,
   },
 });

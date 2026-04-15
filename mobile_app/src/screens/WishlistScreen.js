@@ -3,35 +3,46 @@ import {
   View,
   Text,
   FlatList,
-  Image,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
   Alert,
+  SafeAreaView,
+  StatusBar,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { wishlistAPI } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { COLORS, SPACING, TYPOGRAPHY } from '../theme/theme';
 import Icon from 'react-native-vector-icons/Ionicons';
+import ProductCard from '../components/ProductCard';
+import CategoryChip from '../components/CategoryChip';
+
+const CATEGORIES = ['All', 'Jacket', 'Shirt', 'Pant', 'T-Shirt'];
 
 const WishlistScreen = ({ navigation }) => {
   const { userInfo } = useAuth();
   const [wishlist, setWishlist] = useState([]);
+  const [filteredWishlist, setFilteredWishlist] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState('All');
 
-  const fetchWishlist = async () => {
+  const fetchWishlist = async (silent = false) => {
     if (!userInfo) return;
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const response = await wishlistAPI.get(userInfo._id);
       setWishlist(response.data);
+      setFilteredWishlist(response.data);
     } catch (error) {
       console.log('Wishlist fetch error:', error);
+      const msg = error.response?.data?.message || error.message || 'Check your connection.';
+      Alert.alert('Wishlist Fetch Failed', msg);
     } finally {
       setLoading(false);
     }
   };
+
 
   useFocusEffect(
     useCallback(() => {
@@ -39,131 +50,166 @@ const WishlistScreen = ({ navigation }) => {
     }, [userInfo])
   );
 
-  const removeFromWishlist = async (id) => {
+  const handleCategoryPress = (category) => {
+    setActiveCategory(category);
+    if (category === 'All') {
+      setFilteredWishlist(wishlist);
+    } else {
+      const filtered = wishlist.filter(item => 
+        item.product && item.product.category && item.product.category.toLowerCase() === category.toLowerCase()
+      );
+      setFilteredWishlist(filtered);
+    }
+  };
+
+  const handleRemove = async (id) => {
     try {
       await wishlistAPI.remove(id);
       fetchWishlist();
+      Alert.alert('Success', 'Removed from wishlist');
     } catch (error) {
-      Alert.alert('Error', 'Failed to remove from wishlist');
+      console.log('Remove from wishlist error:', error);
+      Alert.alert('Error', 'Failed to remove item');
     }
   };
+
 
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color={COLORS.secondary} />
-      </View>
-    );
-  }
-
-  if (wishlist.length === 0) {
-    return (
-      <View style={styles.center}>
-        <Icon name="heart-dislike-outline" size={80} color={COLORS.accent} />
-        <Text style={styles.emptyText}>Your wishlist is empty</Text>
-        <TouchableOpacity 
-          style={styles.shopBtn} 
-          onPress={() => navigation.navigate('Home')}
-        >
-          <Text style={styles.shopBtnText}>Browse Products</Text>
-        </TouchableOpacity>
+        <ActivityIndicator size="large" color={COLORS.primary} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <FlatList
-        data={wishlist}
-        keyExtractor={(item) => item._id}
-        renderItem={({ item }) => (
-          <TouchableOpacity 
-            style={styles.card}
-            onPress={() => navigation.navigate('ProductDetails', { id: item.product._id })}
-          >
-            <Image 
-              source={{ uri: `http://10.0.2.2:5000${item.product.images?.[0]}` }} 
-              style={styles.image} 
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+      
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <Icon name="arrow-back" size={24} color={COLORS.text} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>My Wishlist</Text>
+        <TouchableOpacity style={styles.backBtn} onPress={() => fetchWishlist()}>
+          <Icon name="refresh" size={20} color={COLORS.primary} />
+        </TouchableOpacity>
+      </View>
+
+
+      {/* Category Filter */}
+      <View style={styles.categoryContainer}>
+        <FlatList
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          data={CATEGORIES}
+          keyExtractor={(item) => item}
+          renderItem={({ item }) => (
+            <CategoryChip
+              label={item}
+              active={activeCategory === item}
+              onPress={() => handleCategoryPress(item)}
             />
-            <View style={styles.info}>
-              <Text style={styles.name} numberOfLines={1}>{item.product.name}</Text>
-              <Text style={styles.price}>${item.product.price}</Text>
-              <View style={styles.ratingRow}>
-                <Icon name="star" size={14} color="#FFD700" />
-                <Text style={styles.ratingText}>{item.product.averageRating || '0.0'}</Text>
-              </View>
+          )}
+          contentContainerStyle={styles.categoryList}
+        />
+      </View>
+
+      {/* Wishlist Grid */}
+      <FlatList
+        data={filteredWishlist}
+        keyExtractor={(item) => item._id}
+        numColumns={2}
+        columnWrapperStyle={styles.row}
+        renderItem={({ item }) => {
+          if (!item.product) return null;
+          return (
+            <View style={styles.cardContainer}>
+              <ProductCard
+                product={item.product}
+                onPress={() => navigation.navigate('ProductDetails', { id: item.product._id })}
+              />
+              <TouchableOpacity 
+                style={styles.removeBtn} 
+                onPress={() => handleRemove(item._id)}
+              >
+                <Icon name="trash-outline" size={18} color={COLORS.error} />
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity 
-              style={styles.removeBtn}
-              onPress={() => removeFromWishlist(item._id)}
-            >
-              <Icon name="close-circle" size={24} color={COLORS.error} />
-            </TouchableOpacity>
-          </TouchableOpacity>
-        )}
+          );
+        }}
+
         contentContainerStyle={styles.list}
+        ListEmptyComponent={
+          <View style={styles.emptyCenter}>
+            <Icon name="heart-dislike-outline" size={80} color={COLORS.border} />
+            <Text style={styles.emptyText}>No items in your wishlist</Text>
+            <TouchableOpacity 
+              style={styles.shopBtn} 
+              onPress={() => navigation.navigate('Home')}
+            >
+              <Text style={styles.shopBtnText}>Browse Products</Text>
+            </TouchableOpacity>
+          </View>
+        }
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.grey,
+    backgroundColor: COLORS.background,
   },
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: SPACING.xl,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.m,
+    paddingVertical: SPACING.m,
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+  },
+  headerTitle: {
+    ...TYPOGRAPHY.h3,
+    fontSize: 18,
+  },
+  categoryContainer: {
+    marginVertical: SPACING.m,
+  },
+  categoryList: {
+    paddingHorizontal: SPACING.m,
   },
   list: {
-    padding: SPACING.m,
+    paddingBottom: SPACING.xl,
   },
-  card: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.white,
-    borderRadius: 15,
-    padding: SPACING.s,
-    marginBottom: SPACING.m,
-    alignItems: 'center',
-    elevation: 3,
+  row: {
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.m,
   },
-  image: {
-    width: 90,
-    height: 90,
-    borderRadius: 10,
-  },
-  info: {
+  emptyCenter: {
     flex: 1,
-    marginLeft: SPACING.m,
-  },
-  name: {
-    ...TYPOGRAPHY.body,
-    fontWeight: 'bold',
-  },
-  price: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.secondary,
-    fontWeight: 'bold',
-    marginTop: 2,
-  },
-  ratingRow: {
-    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 4,
-  },
-  ratingText: {
-    ...TYPOGRAPHY.caption,
-    marginLeft: 3,
-  },
-  removeBtn: {
-    padding: 10,
+    marginTop: 100,
   },
   emptyText: {
-    ...TYPOGRAPHY.h3,
-    color: COLORS.darkGrey,
+    ...TYPOGRAPHY.body,
+    color: COLORS.textSecondary,
     marginTop: SPACING.m,
   },
   shopBtn: {
@@ -171,12 +217,35 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     paddingHorizontal: SPACING.xl,
     paddingVertical: SPACING.m,
-    borderRadius: 10,
+    borderRadius: 30,
   },
   shopBtnText: {
     color: COLORS.white,
     fontWeight: 'bold',
   },
+  cardContainer: {
+    width: '48%',
+    marginBottom: SPACING.m,
+    position: 'relative',
+  },
+  removeBtn: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    zIndex: 10,
+  },
 });
+
 
 export default WishlistScreen;
