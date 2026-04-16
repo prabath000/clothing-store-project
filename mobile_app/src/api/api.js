@@ -2,13 +2,11 @@ import axios from 'axios';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Base URL configuration
-const PRODUCTION_URL = 'https://clothing-store-three.vercel.app/api'; // Live Vercel URL
-const DEVELOPMENT_URL = Platform.OS === 'android' 
-  ? 'http://10.0.2.2:5000/api' 
-  : 'http://localhost:5000/api';
+// ✅ Vercel Production URL - replace with your actual Vercel URL after deploying
+const VERCEL_URL = 'https://YOUR-PROJECT-NAME.vercel.app/api';
 
-const BASE_URL = __DEV__ ? DEVELOPMENT_URL : PRODUCTION_URL;
+// Use Vercel URL always (works on physical device without PC server)
+const BASE_URL = VERCEL_URL;
 
 const api = axios.create({
   baseURL: BASE_URL,
