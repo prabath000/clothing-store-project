@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ✅ Vercel Production URL - replace with your actual Vercel URL after deploying
-const VERCEL_URL = 'https://YOUR-PROJECT-NAME.vercel.app/api';
+const VERCEL_URL = 'https://clothing-store-project-three.vercel.app/';
 
 // Use Vercel URL always (works on physical device without PC server)
 const BASE_URL = VERCEL_URL;
