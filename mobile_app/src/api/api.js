@@ -2,15 +2,33 @@ import axios from 'axios';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// ✅ Vercel Production URL - replace with your actual Vercel URL after deploying
-const VERCEL_URL = 'https://clothing-store-project-three.vercel.app/';
+// 🌐 URL Configuration
+const VERCEL_URL = 'https://clothing-store-project-three.vercel.app/api'; 
+const LOCAL_URL_ANDROID = 'http://10.0.2.2:5000/api';
+const LOCAL_URL_IOS = 'http://localhost:5000/api';
 
-// Use Vercel URL always (works on physical device without PC server)
-const BASE_URL = VERCEL_URL;
+// 🔄 Automatic URL Selection
+const isPlaceholder = VERCEL_URL.includes('YOUR-PROJECT-NAME');
+export const BASE_URL = isPlaceholder 
+  ? (Platform.OS === 'android' ? LOCAL_URL_ANDROID : LOCAL_URL_IOS)
+  : VERCEL_URL;
+
+console.log('------------------------------------');
+console.log(`🚀 API Base URL: ${BASE_URL}`);
+if (isPlaceholder) {
+  console.warn('⚠️ WARNING: Using local development URL. Ensure your backend is running at :5000');
+}
+console.log('------------------------------------');
 
 const api = axios.create({
   baseURL: BASE_URL,
+  timeout: 15000, 
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  }
 });
+
 
 // Request Interceptor to add JWT Token
 api.interceptors.request.use(

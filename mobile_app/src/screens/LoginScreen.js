@@ -14,7 +14,7 @@ import {
   Image,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
-import { authAPI } from '../api/api';
+import { authAPI, BASE_URL } from '../api/api';
 import { COLORS, SPACING, TYPOGRAPHY } from '../theme/theme';
 import Icon from 'react-native-vector-icons/Feather';
 import CustomButton from '../components/CustomButton';
@@ -40,7 +40,7 @@ const LoginScreen = ({ navigation }) => {
       let errorMsg = 'Something went wrong. Please check your credentials.';
       
       if (!error.response) {
-        errorMsg = 'Server unreachable. Please check your internet connection or try again later.';
+        errorMsg = `Server unreachable at ${authAPI.login ? 'configured backend' : 'backend'}. Please check your internet connection or try again later.\n\nTarget: ${BASE_URL}`;
       } else if (error.response.data?.message) {
         errorMsg = error.response.data.message;
       }

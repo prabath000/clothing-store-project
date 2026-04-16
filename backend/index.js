@@ -21,11 +21,12 @@ connectDB();
 
 const app = express();
 
-// Enable CORS (must be before routes)
+// Enable CORS
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  credentials: true,
 }));
 
 // Body parser (must be before routes)
@@ -47,12 +48,24 @@ app.get('/', (req, res) => res.send('Clothing Store API is Live ✅'));
 
 // Health check route
 app.get('/api/health', (req, res) => {
+  const dbStatus = mongoose.connection.readyState;
+  const dbStatusMap = {
+    0: 'disconnected',
+    1: 'connected',
+    2: 'connecting',
+    3: 'disconnecting'
+  };
+
   res.status(200).json({
     status: 'success',
-    message: 'API is running',
+    message: 'Clothing Store API is running',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV,
-    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    environment: process.env.NODE_ENV || 'development',
+    database: {
+      status: dbStatusMap[dbStatus] || 'unknown',
+      readyState: dbStatus
+    },
+    uptime: process.uptime()
   });
 });
 
@@ -79,8 +92,10 @@ app.use((err, req, res, next) => {
 // Start server locally (not on Vercel)
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 5000;
-  app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Local:            http://localhost:${PORT}`);
+    console.log(`Emulator/Network: http://0.0.0.0:${PORT}`);
   });
 }
 
