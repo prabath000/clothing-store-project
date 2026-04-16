@@ -1,6 +1,8 @@
+const dotenv = require('dotenv');
+dotenv.config(); // MUST be first before anything else
+
 const express = require('express');
 const mongoose = require('mongoose');
-const dotenv = require('dotenv');
 const cors = require('cors');
 const connectDB = require('./src/config/db');
 
@@ -14,13 +16,34 @@ const paymentRoutes = require('./src/routes/paymentRoutes');
 const wishlistRoutes = require('./src/routes/wishlistRoutes');
 const reviewRoutes = require('./src/routes/reviewRoutes');
 
-// Load env vars
-dotenv.config();
-
 // Connect to database
 connectDB();
 
 const app = express();
+
+// Enable CORS (must be before routes)
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
+// Body parser (must be before routes)
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
+// Make uploads folder static
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Root - heartbeat
+app.get('/', (req, res) => res.send('Clothing Store API is Live ✅'));
 
 // Health check route
 app.get('/api/health', (req, res) => {
@@ -29,29 +52,9 @@ app.get('/api/health', (req, res) => {
     message: 'API is running',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV,
-    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
   });
 });
-
-// Heartbeat for keeping Vercel warm
-app.get('/', (req, res) => res.send('Clothing Store API is Live'));
-
-// Request logging middleware
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-  next();
-});
-
-// Body parser
-app.use(express.json());
-
-// Enable CORS
-app.use(cors());
-
-
-// Make uploads folder static
-const path = require('path');
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Mount routers
 app.use('/api/auth', authRoutes);
@@ -65,6 +68,7 @@ app.use('/api/reviews', reviewRoutes);
 
 // Basic error handler
 app.use((err, req, res, next) => {
+  console.error('Server Error:', err.message);
   const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
   res.status(statusCode).json({
     message: err.message,
@@ -72,11 +76,11 @@ app.use((err, req, res, next) => {
   });
 });
 
-const PORT = process.env.PORT || 5000;
-
+// Start server locally (not on Vercel)
 if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server running on http://localhost:${PORT}`);
   });
 }
 
